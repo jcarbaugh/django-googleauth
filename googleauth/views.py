@@ -8,24 +8,28 @@ from openid.consumer.consumer import Consumer
 from openid.yadis.discover import DiscoveryFailure
 import urllib
 
-if hasattr(settings, 'GOOGLEAUTH_DOMAIN'):
-    OPENID_ENDPOINT = "https://www.google.com/accounts/o8/site-xrds?hd=%s" % settings.GOOGLEAUTH_DOMAIN
-else:
-    OPENID_ENDPOINT = "https://www.google.com/accounts/o8/id"
-
-
 def login(request):
+    """ Redirect user to appropriate Google authentication URL.
+        Uses attribute exchange to get user's name and email address.
+    """
     
-    request.session['login_referer'] = request.META.get('HTTP_REFERER', None)
+    request.session['next'] = request.META.get('HTTP_REFERER', None)
     
     openid_consumer = Consumer(request.session, None)
     
+    # generate appropriate endpoint based on whether Google or Apps account is used
+    if hasattr(settings, 'GOOGLEAUTH_DOMAIN'):
+        endpoint = "https://www.google.com/accounts/o8/site-xrds?hd=%s" % settings.GOOGLEAUTH_DOMAIN
+    else:
+        endpoint = "https://www.google.com/accounts/o8/id"
+    
+    # try request
     try:
-        auth_request = openid_consumer.begin(OPENID_ENDPOINT)
+        auth_request = openid_consumer.begin(endpoint)
     except DiscoveryFailure, df:
-        return HttpResponse("%s" % df)
+        return HttpResponseServerError("%s" % df)
 
-    # this is where attribute exchange stuff should be added
+    # attribute exchange to get email, firstname, and lastname
     extras = {
         "openid.ns.ax": "http://openid.net/srv/ax/1.0",
         "openid.ax.mode": "fetch_request",
@@ -36,10 +40,8 @@ def login(request):
     }
     
     # generate callback URL
-    
     scheme = 'https' if request.is_secure() else 'http'
     realm_default = 'localhost:8000' if settings.DEBUG else Site.objects.get_current().domain
-    
     realm = '%s://%s' % (scheme, getattr(settings, 'GOOGLEAUTH_REALM', realm_default))
     cb_url = realm + reverse('googleauth.views.callback')
     
@@ -49,9 +51,13 @@ def login(request):
     return HttpResponseRedirect("%s&%s" % (url, urllib.urlencode(extras)))
 
 def callback(request):
+    """ Handle callback from Google authentication.
+        Logs user in if the callback was successful.
+    """
     
     identity = request.GET.get('openid.identity')
     
+    # extract ax attributes from response
     attributes = {
         'firstname': request.GET.get('openid.ext1.value.firstname', None),
         'lastname': request.GET.get('openid.ext1.value.lastname', None),
@@ -63,8 +69,11 @@ def callback(request):
         return HttpResponseServerError('user account not found')
     auth.login(request, user)
     
-    redirect = request.session.get('login_referer', None)
+    redirect = request.session.get('next', None)
     return HttpResponseRedirect(redirect or '/')
 
 def logout(request):
+    """ Log user out of Django application.
+        Does not log out of user's Google account.
+    """
     return django_logout(request)
