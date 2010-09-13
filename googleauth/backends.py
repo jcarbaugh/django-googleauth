@@ -2,7 +2,6 @@ from django.conf import settings
 from django.contrib.auth.models import User
 
 IS_STAFF = getattr(settings, 'GOOGLEAUTH_IS_STAFF', True)
-NEW_USER_CALLBACK = getattr(settings, 'GOOGLEAUTH_NEW_USER_CALLBACK', None)
 DOMAIN = getattr(settings, 'GOOGLEAUTH_DOMAIN', None)
 
 class GoogleAuthBackend(object):
@@ -27,9 +26,6 @@ class GoogleAuthBackend(object):
             user.is_staff = IS_STAFF
             user.set_unusable_password()
             user.save()
-            
-            if NEW_USER_CALLBACK:
-                NEW_USER_CALLBACK(user)
         
         return user
     
