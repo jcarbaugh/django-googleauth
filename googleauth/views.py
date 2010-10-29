@@ -16,7 +16,7 @@ else:
 
 def login(request):
     
-    request.session['login_referer'] = request.META.get('HTTP_REFERER', None)
+    request.session['next'] = request.META.get('HTTP_REFERER', None)
     
     openid_consumer = Consumer(request.session, None)
     
@@ -63,8 +63,9 @@ def callback(request):
         return HttpResponseServerError('user account not found')
     auth.login(request, user)
     
-    redirect = request.session.get('login_referer', None)
-    return HttpResponseRedirect(redirect or '/')
+    redirect = request.session.get('next', None)
+    redirect_default = getattr(settings, 'LOGIN_REDIRECT_URL', '/')
+    return HttpResponseRedirect(redirect or redirect_default)
 
 def logout(request):
     return django_logout(request)
