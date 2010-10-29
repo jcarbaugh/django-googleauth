@@ -70,7 +70,8 @@ def callback(request):
     auth.login(request, user)
     
     redirect = request.session.get('next', None)
-    return HttpResponseRedirect(redirect or '/')
+    redirect_default = getattr(settings, 'LOGIN_REDIRECT_URL', '/')
+    return HttpResponseRedirect(redirect or redirect_default)
 
 def logout(request):
     """ Log user out of Django application.
