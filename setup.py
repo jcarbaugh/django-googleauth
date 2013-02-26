@@ -4,11 +4,11 @@ from distutils.core import setup
 
 setup(
     name="django-googleauth",
-    version='0.1',
+    version='0.2',
     py_modules=["googleauth"],
     description="OpenID authentication Google and Google Apps accounts",
     author="Jeremy Carbaugh",
-    author_email = "jcarbaugh@gmail.com",
+    author_email="jcarbaugh@gmail.com",
     license='BSD',
     #long_description=long_description,
     platforms=["any"],
