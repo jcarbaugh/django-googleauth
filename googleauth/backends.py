@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.auth.models import User, Group
 
 IS_STAFF = getattr(settings, 'GOOGLEAUTH_IS_STAFF', True)
-USER_GROUPS = getattr(settings, 'GOOGLEAUTH_GROUPS', Tuple())
+USER_GROUPS = getattr(settings, 'GOOGLEAUTH_GROUPS', tuple())
 DOMAIN = getattr(settings, 'GOOGLEAUTH_DOMAIN', None)
 
 
