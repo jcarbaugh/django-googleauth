@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(
     name="django-googleauth",
-    version='0.2',
+    version='0.3.0',
     py_modules=["googleauth"],
     description="OpenID authentication Google and Google Apps accounts",
     author="Jeremy Carbaugh",
