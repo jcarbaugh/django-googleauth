@@ -1,16 +1,16 @@
 from distutils.core import setup
 
-#long_description = open('README.md').read()
+long_description = open('README.rst').read()
 
 setup(
     name="django-googleauth",
     version='0.3.0',
-    py_modules=["googleauth"],
+    packages=["googleauth"],
     description="OpenID authentication Google and Google Apps accounts",
     author="Jeremy Carbaugh",
     author_email="jcarbaugh@gmail.com",
     license='BSD',
-    #long_description=long_description,
+    long_description=long_description,
     platforms=["any"],
     classifiers=[
         "Development Status :: 4 - Beta",
