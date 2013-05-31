@@ -18,7 +18,13 @@ class GoogleAuthBackend(object):
 
         try:
 
-            user = User.objects.get(email=email)
+            try:
+
+                user = User.objects.get(email=email)
+
+            except User.MultipleObjectsReturned:
+
+                user = User.objects.get(username=username, email=email)
 
         except User.DoesNotExist:
 
