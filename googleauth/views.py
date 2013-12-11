@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.contrib import auth
 from django.contrib.auth.views import logout as django_logout
-from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseServerError
 from openid.consumer.consumer import Consumer
@@ -41,7 +40,7 @@ def login(request):
     
     # generate callback URL
     scheme = 'https' if request.is_secure() else 'http'
-    realm_default = 'localhost:8000' if settings.DEBUG else Site.objects.get_current().domain
+    realm_default = 'localhost:8000' if settings.DEBUG else settings.ALLOWED_HOSTS[0]
     realm = '%s://%s' % (scheme, getattr(settings, 'GOOGLEAUTH_REALM', realm_default))
     cb_url = realm + reverse('googleauth.views.callback')
     
