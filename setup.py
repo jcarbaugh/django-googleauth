@@ -1,17 +1,18 @@
-from distutils.core import setup
+from setuptools import setup
 
 long_description = open('README.rst').read()
 
 setup(
     name="django-googleauth",
-    version='0.3.0',
+    version='2.0',
     packages=["googleauth"],
-    description="OpenID authentication Google and Google Apps accounts",
+    description="OAuth 2.0 authentication for Google and Google Apps accounts",
     author="Jeremy Carbaugh",
     author_email="jcarbaugh@gmail.com",
     license='BSD',
     long_description=long_description,
     platforms=["any"],
+    install_requires=["PyJWT==0.2.1"],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",

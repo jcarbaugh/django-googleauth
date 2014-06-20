@@ -1,1 +1,1 @@
-python-openid
+PyJWT==0.2.1
