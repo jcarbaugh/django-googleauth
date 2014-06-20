@@ -7,8 +7,6 @@ from django.contrib import auth
 from django.contrib.auth.views import logout as django_logout
 from django.http import HttpResponse, HttpResponseRedirect
 
-from .util import generate_csrf_token, generate_redirect_uri
-
 GOOGLE_AUTH_ENDPOINT = 'https://accounts.google.com/o/oauth2/auth'
 GOOGLE_TOKEN_ENDPOINT = 'https://accounts.google.com/o/oauth2/token'
 GOOGLE_USERINFO_ENDPOINT = 'https://www.googleapis.com/plus/v1/people/me/openIdConnect'
@@ -17,7 +15,35 @@ CLIENT_ID = getattr(settings, 'GOOGLEAUTH_CLIENT_ID', None)
 CLIENT_SECRET = getattr(settings, 'GOOGLEAUTH_CLIENT_SECRET', None)
 DOMAIN = getattr(settings, 'GOOGLEAUTH_DOMAIN', None)
 DOMAIN_ONLY = getattr(settings, 'GOOGLEAUTH_DOMAIN_ONLY', False)
+SECURE = getattr(settings, 'GOOGLEAUTH_SECURE', True)
 
+
+import random
+from django.conf import settings
+from django.core.urlresolvers import reverse
+
+CSRF_CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+
+
+#
+# utility methods
+#
+
+def generate_csrf_token():
+    return ''.join(random.choice(CSRF_CHARACTERS) for x in xrange(32))
+
+
+def generate_redirect_uri():
+    scheme = 'https' if SECURE else 'http'
+    domain = DOMAIN
+    path = reverse('googleauth_callback')
+    return '%s://%s%s' % (scheme, domain, path)
+
+
+
+#
+# the views
+#
 
 def login(request):
 
