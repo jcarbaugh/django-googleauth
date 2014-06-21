@@ -4,8 +4,7 @@ from django.contrib.auth.models import User, Group
 
 IS_STAFF = getattr(settings, 'GOOGLEAUTH_IS_STAFF', False)
 GROUPS = getattr(settings, 'GOOGLEAUTH_GROUPS', tuple())
-DOMAIN = getattr(settings, 'GOOGLEAUTH_DOMAIN', None)
-DOMAIN_ONLY = getattr(settings, 'GOOGLEAUTH_DOMAIN_ONLY', False)
+APPS_DOMAIN = getattr(settings, 'GOOGLEAUTH_APPS_DOMAIN', None)
 
 
 class GoogleAuthBackend(object):
@@ -15,7 +14,7 @@ class GoogleAuthBackend(object):
         email = attributes.get('email', None)
         (username, domain) = email.split('@')
 
-        if DOMAIN_ONLY and DOMAIN != domain:
+        if APPS_DOMAIN and APPS_DOMAIN != domain:
             return None
 
         try:
@@ -31,8 +30,8 @@ class GoogleAuthBackend(object):
         except User.DoesNotExist:
 
             user = User.objects.create(username=username, email=email)
-            user.first_name = attributes.get('first_name', '')
-            user.last_name = attributes.get('last_name', '')
+            user.first_name = attributes.get('first_name') or ''
+            user.last_name = attributes.get('last_name') or ''
             user.is_staff = IS_STAFF
             user.set_unusable_password()
 

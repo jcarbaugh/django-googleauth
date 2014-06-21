@@ -1,8 +1,10 @@
 import jwt
+import random
 import requests
 import urllib
 
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.contrib import auth
 from django.contrib.auth.views import logout as django_logout
 from django.http import HttpResponse, HttpResponseRedirect
@@ -11,34 +13,27 @@ GOOGLE_AUTH_ENDPOINT = 'https://accounts.google.com/o/oauth2/auth'
 GOOGLE_TOKEN_ENDPOINT = 'https://accounts.google.com/o/oauth2/token'
 GOOGLE_USERINFO_ENDPOINT = 'https://www.googleapis.com/plus/v1/people/me/openIdConnect'
 
+USE_HTTPS = getattr(settings, 'GOOGLEAUTH_USE_HTTPS', True)
 CLIENT_ID = getattr(settings, 'GOOGLEAUTH_CLIENT_ID', None)
 CLIENT_SECRET = getattr(settings, 'GOOGLEAUTH_CLIENT_SECRET', None)
-DOMAIN = getattr(settings, 'GOOGLEAUTH_DOMAIN', None)
-DOMAIN_ONLY = getattr(settings, 'GOOGLEAUTH_DOMAIN_ONLY', False)
-SECURE = getattr(settings, 'GOOGLEAUTH_SECURE', True)
-
-
-import random
-from django.conf import settings
-from django.core.urlresolvers import reverse
-
-CSRF_CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-
+CALLBACK_DOMAIN = getattr(settings, 'GOOGLEAUTH_CALLBACK_DOMAIN', None)
+APPS_DOMAIN = getattr(settings, 'GOOGLEAUTH_APPS_DOMAIN', None)
+GET_PROFILE = getattr(settings, 'GOOGLEAUTH_GET_PROFILE', True)
 
 #
 # utility methods
 #
+
+CSRF_CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 
 def generate_csrf_token():
     return ''.join(random.choice(CSRF_CHARACTERS) for x in xrange(32))
 
 
 def generate_redirect_uri():
-    scheme = 'https' if SECURE else 'http'
-    domain = DOMAIN
+    scheme = 'https' if USE_HTTPS else 'http'
     path = reverse('googleauth_callback')
-    return '%s://%s%s' % (scheme, domain, path)
-
+    return '%s://%s%s' % (scheme, CALLBACK_DOMAIN, path)
 
 
 #
@@ -46,8 +41,6 @@ def generate_redirect_uri():
 #
 
 def login(request):
-
-    request.session['next'] = request.META.get('HTTP_REFERER', None)
 
     csrf_token = generate_csrf_token()
 
@@ -59,10 +52,11 @@ def login(request):
         'state': csrf_token,
     }
 
-    if DOMAIN_ONLY:
-        params['hd'] = DOMAIN
+    if APPS_DOMAIN:
+        params['hd'] = APPS_DOMAIN
 
     request.session['googleauth_csrf'] = csrf_token
+    request.session['next'] = request.META.get('HTTP_REFERER', None)
 
     return HttpResponseRedirect("%s?%s" % (GOOGLE_AUTH_ENDPOINT, urllib.urlencode(params)))
 
@@ -72,10 +66,8 @@ def callback(request):
     if request.GET.get('state') != request.session.get('googleauth_csrf'):
         return HttpResponse('Invalid state parameter', status=401)
 
-    code = request.GET.get('code')
-
     data = {
-        'code': code,
+        'code': request.GET.get('code'),
         'client_id': CLIENT_ID,
         'client_secret': CLIENT_SECRET,
         'redirect_uri': generate_redirect_uri(),
@@ -90,8 +82,10 @@ def callback(request):
     tokens = resp.json()
     id_token = jwt.decode(tokens['id_token'], verify=False)
 
-    if not id_token['email_verified'] or id_token['iss'] != 'accounts.google.com' or id_token['aud'] != CLIENT_ID:
-        return HttpResponse('Forged response', status=401)
+    if (not id_token['email_verified']
+         or id_token['iss'] != 'accounts.google.com'
+         or id_token['aud'] != CLIENT_ID):
+            return HttpResponse('Forged response', status=401)
 
     attributes = {
         'email': id_token.get('email'),
@@ -101,12 +95,17 @@ def callback(request):
 
     # get profile data
 
-    headers = {'Authorization': 'Bearer %s' % attributes['access_token']}
-    resp = requests.get(GOOGLE_USERINFO_ENDPOINT, headers=headers)
-    if resp.status_code == 200:
-        profile = resp.json()
-        attributes['first_name'] = profile.get('given_name')
-        attributes['last_name'] = profile.get('family_name')
+    if GET_PROFILE:
+
+        headers = {'Authorization': 'Bearer %s' % attributes['access_token']}
+        resp = requests.get(GOOGLE_USERINFO_ENDPOINT, headers=headers)
+
+        if resp.status_code == 200:
+
+            profile = resp.json()
+
+            attributes['first_name'] = profile.get('given_name')
+            attributes['last_name'] = profile.get('family_name')
 
 
     # authenticate user
