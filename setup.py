@@ -7,6 +7,7 @@ setup(
     version='2.0',
     packages=["googleauth"],
     description="OAuth 2.0 authentication for Google and Google Apps accounts",
+    url="https://github.com/jcarbaugh/django-googleauth",
     author="Jeremy Carbaugh",
     author_email="jcarbaugh@gmail.com",
     license='BSD',
