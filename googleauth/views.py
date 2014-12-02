@@ -27,7 +27,7 @@ GET_PROFILE = getattr(settings, 'GOOGLEAUTH_GET_PROFILE', True)
 CSRF_CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 
 def generate_csrf_token():
-    return ''.join(random.choice(CSRF_CHARACTERS) for x in xrange(32))
+    return ''.join(random.choice(CSRF_CHARACTERS) for x in range(32))
 
 
 def generate_redirect_uri():
