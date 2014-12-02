@@ -1,7 +1,10 @@
 import jwt
 import random
 import requests
-import urllib
+try:
+    from urllib import urlencode
+except ImportError:
+    from urllib.parse import urlencode
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -58,7 +61,7 @@ def login(request):
     request.session['googleauth_csrf'] = csrf_token
     request.session['next'] = request.META.get('HTTP_REFERER', None)
 
-    return HttpResponseRedirect("%s?%s" % (GOOGLE_AUTH_ENDPOINT, urllib.urlencode(params)))
+    return HttpResponseRedirect("%s?%s" % (GOOGLE_AUTH_ENDPOINT, urlencode(params)))
 
 
 def callback(request):
